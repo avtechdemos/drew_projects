@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Assistant</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232f6b4f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='16' fill='white' font-family='Arial'%3EPA%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app-bg" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <p class="brand__name">Project Assistant</p>
+        <p class="brand__tag">Outdoor &amp; yard project mockups</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="btn-new-project" class="btn btn--ghost" hidden>Start new project</button>
+        <button type="button" id="btn-change-key" class="btn btn--ghost" hidden>Change key</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Section A: API Key -->
+    <section id="section-key" class="panel" aria-labelledby="key-heading">
+      <h2 id="key-heading">OpenAI API key</h2>
+      <p class="panel__lead">
+        Enter your OpenAI API key to begin. It is kept only for this browser session and is sent
+        directly from your browser to OpenAI — never stored permanently by this app.
+      </p>
+      <form id="form-key" class="stack">
+        <label class="field">
+          <span class="field__label">API key</span>
+          <input
+            type="password"
+            id="input-api-key"
+            name="apiKey"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="sk-..."
+            required
+          />
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn btn--primary">Start</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Section B: Project input -->
+    <section id="section-input" class="panel" hidden aria-labelledby="input-heading">
+      <h2 id="input-heading">Project details</h2>
+      <p class="panel__lead">
+        Upload a photo of the outdoor area and describe the project. Include sizes, materials,
+        surrounding conditions, and any constraints.
+      </p>
+      <form id="form-project" class="stack">
+        <label class="field">
+          <span class="field__label">Site photo</span>
+          <span class="field__hint">JPG, PNG, or WebP — max 10MB. Outdoor / yard areas work best.</span>
+          <input type="file" id="input-image" accept="image/jpeg,image/png,image/webp" required />
+        </label>
+        <div id="image-preview-wrap" class="image-frame" hidden>
+          <img id="image-preview" alt="Uploaded site photo preview" />
+        </div>
+        <label class="field">
+          <span class="field__label">Project description</span>
+          <textarea
+            id="input-description"
+            rows="6"
+            placeholder="Describe the outdoor project in detail..."
+            required
+          ></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit" id="btn-generate-first" class="btn btn--primary">
+            Generate first mockup
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Section C: Source of truth -->
+    <section id="section-original" class="panel panel--original" hidden aria-labelledby="original-heading">
+      <h2 id="original-heading">Original</h2>
+      <div class="image-frame">
+        <img id="original-image" alt="Original site photo" />
+      </div>
+      <div class="readonly-block">
+        <h3 class="readonly-block__title">Original description</h3>
+        <p id="original-description" class="readonly-block__body"></p>
+      </div>
+    </section>
+
+    <!-- Status/error sit above the Mockup section (not above Original) -->
+    <div id="error-banner" class="banner banner--error" hidden role="alert"></div>
+    <div id="status-banner" class="banner banner--status" hidden role="status"></div>
+
+    <!-- Section D: Mockup workspace -->
+    <section id="section-mockup" class="panel panel--mockup" hidden aria-labelledby="mockup-heading">
+      <div class="section-head">
+        <h2 id="mockup-heading">Mockup</h2>
+        <div class="version-nav" aria-label="Mockup version navigation">
+          <button type="button" id="btn-prev-version" class="btn btn--icon" aria-label="Previous version">
+            ←
+          </button>
+          <span id="version-label" class="version-label">Version 1 of 1</span>
+          <button type="button" id="btn-next-version" class="btn btn--icon" aria-label="Next version">
+            →
+          </button>
+        </div>
+      </div>
+
+      <div class="image-frame image-frame--mockup">
+        <img id="mockup-image" alt="" hidden />
+        <div id="mockup-placeholder" class="mockup-placeholder" hidden>
+          <p>Your mockup will appear here.</p>
+        </div>
+        <div id="mockup-loading" class="loading-overlay" hidden>
+          <div class="spinner" aria-hidden="true"></div>
+          <p id="mockup-loading-text">Generating mockup… this can take 1–2 minutes. Please keep this tab open.</p>
+        </div>
+      </div>
+
+      <div class="readonly-block">
+        <h3 class="readonly-block__title">Mockup description</h3>
+        <p id="mockup-description" class="readonly-block__body"></p>
+      </div>
+
+      <div id="feedback-area" class="stack">
+        <label class="field">
+          <span class="field__label">Feedback for next mockup</span>
+          <span class="field__hint">
+            Describe what to change. Generating always adds a new version — you can go back anytime.
+          </span>
+          <textarea
+            id="input-feedback"
+            rows="4"
+            placeholder="What should change in the next mockup?"
+          ></textarea>
+        </label>
+        <div class="actions actions--split">
+          <button type="button" id="btn-generate-next" class="btn btn--secondary">
+            Generate next mockup
+          </button>
+          <button type="button" id="btn-accept" class="btn btn--primary">
+            Accept this mockup
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section E: Report -->
+    <section id="section-report" class="panel panel--report" hidden aria-labelledby="report-heading">
+      <h2 id="report-heading">Project report</h2>
+      <div id="report-loading" class="loading-inline" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Building your materials, tools, and tips list…</p>
+      </div>
+      <div id="report-content"></div>
+      <div class="actions actions--center report-download">
+        <button type="button" id="btn-download-pdf" class="btn btn--primary" disabled>
+          Download PDF
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Proof of concept for outdoor and yard projects. Visualizations and estimates are approximate
+      and not engineering, code, or permit advice.
+    </p>
+  </footer>
+
+  <!-- Hidden PDF export root -->
+  <div id="pdf-export-root" class="pdf-export" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/prompts.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/report.js?v=3"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
